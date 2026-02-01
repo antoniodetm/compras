@@ -36,7 +36,9 @@
         input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; margin: 0; }
         .del { color: #eee; font-size: 1.1rem; padding-left: 5px; }
         
-        .clear { background: none; border: none; color: #95a5a6; font-size: 0.75rem; text-decoration: underline; margin-top: 10px; width: 100%; text-align: left; }
+        .footer-buttons { display: flex; justify-content: space-between; margin-top: 10px; }
+        .clear { background: none; border: none; color: #95a5a6; font-size: 0.75rem; text-decoration: underline; padding: 5px; }
+        .share { background: none; border: none; color: #27ae60; font-size: 0.75rem; text-decoration: underline; padding: 5px; font-weight: bold; }
         #itemInput { display: none; }
     </style>
 </head>
@@ -47,7 +49,11 @@
     <input type="text" id="itemInput">
 
     <div id="listContainer"></div>
-    <button class="clear" onclick="clearChecked()">Borrar productos marcados</button>
+    
+    <div class="footer-buttons">
+        <button class="clear" onclick="clearChecked()">Borrar marcados</button>
+        <button class="share" onclick="shareWhatsApp()">Enviar por WhatsApp</button>
+    </div>
 </div>
 
 <script>
@@ -127,16 +133,32 @@
     }
 
     function toggle(sIdx, iIdx) { sections[sIdx].items[iIdx].checked = !sections[sIdx].items[iIdx].checked; render(); }
+    
     function remove(sIdx, iIdx) { 
         sections[sIdx].items.splice(iIdx, 1); 
         if (sections[sIdx].items.length === 0) sections.splice(sIdx, 1); 
         render(); 
     }
+
     function clearChecked() {
         sections.forEach(sec => sec.items = sec.items.filter(i => !i.checked));
         sections = sections.filter(sec => sec.items.length > 0);
         render();
     }
+
+    function shareWhatsApp() {
+        if (sections.length === 0) return alert("Lista vacía");
+        let text = "*MI LISTA DE LA COMPRA* 🛒\n\n";
+        sections.forEach(sec => {
+            text += `*${sec.title}*\n`;
+            sec.items.forEach(item => {
+                text += `${item.checked ? '✅' : '☐'} ${item.name}\n`;
+            });
+            text += "\n";
+        });
+        window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(text));
+    }
+
     render();
 </script>
 </body>
