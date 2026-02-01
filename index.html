@@ -3,165 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lista Compra Inteligente</title>
+    <title>Lista Compra</title>
     <style>
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 20px; background: #f4f7f6; color: #333; }
-        h2 { text-align: center; color: #2c3e50; }
+        body { font-family: sans-serif; margin: 10px; background: #f0f2f5; color: #333; text-align: left; }
+        .container { max-width: 500px; margin: 0 auto; }
         
-        .controls { display: flex; flex-direction: column; gap: 12px; max-width: 500px; margin: 0 auto; }
-        
+        /* Botón gigante arriba */
         .btn-voice { 
-            background: #e74c3c; color: white; border: none; padding: 20px; 
-            border-radius: 15px; font-size: 1.2em; font-weight: bold; 
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); transition: 0.3s;
+            width: 100%; 
+            padding: 25px; 
+            background: #e74c3c; 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 1.5rem; 
+            font-weight: 800; 
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .btn-voice.listening { background: #f1c40f; color: #000; animation: pulse 1.5s infinite; }
+        .btn-voice.listening { background: #f1c40f; color: black; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        /* Estilo de las listas por comercio */
+        .store-section { background: white; border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .store-title { font-size: 0.75rem; font-weight: bold; color: #2980b9; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 8px; }
         
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(0.98); opacity: 0.8; } 100% { transform: scale(1); } }
-
-        .input-group { display: flex; gap: 8px; }
-        input { flex: 1; padding: 15px; border-radius: 12px; border: 2px solid #ddd; font-size: 16px; outline: none; }
-        .btn-add { background: #3498db; color: white; border: none; padding: 0 20px; border-radius: 12px; font-weight: bold; }
-
-        .item-list { margin-top: 25px; max-width: 500px; margin-left: auto; margin-right: auto; }
-        .item { 
-            background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .item span { flex: 1; margin-left: 10px; }
-        .delete-btn { color: #ccc; font-size: 1.5em; padding: 0 10px; cursor: pointer; }
-
-        #debugLog { 
-            background: #222; color: #2ecc71; padding: 10px; font-family: monospace; 
-            font-size: 11px; margin-top: 30px; border-radius: 8px; max-height: 120px; 
-            overflow-y: auto; border: 1px solid #444;
-        }
+        .item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
+        .item:last-child { border-bottom: none; }
+        .item span { flex: 1; font-size: 1.1rem; }
+        
+        input[type="checkbox"] { width: 22px; height: 22px; accent-color: #27ae60; }
+        .del { color: #ddd; font-size: 1.3rem; padding-left: 10px; }
+        
+        .clear { background: none; border: none; color: #95a5a6; font-size: 0.85rem; text-decoration: underline; margin-top: 20px; width: 100%; text-align: left; padding: 10px 0; }
+        
+        /* Ocultamos el input manual pero lo dejamos funcional para el sistema */
+        #itemInput { display: none; }
     </style>
 </head>
 <body>
 
-    <h2>🛒 Lista de Compra</h2>
-    
-    <div class="controls">
-        <button id="voiceBtn" class="btn-voice">🎤 TOCAR Y HABLAR</button>
-        
-        <div class="input-group">
-            <input type="text" id="itemInput" placeholder="Añadir manualmente...">
-            <button class="btn-add" onclick="addItem()">OK</button>
-        </div>
-    </div>
+<div class="container">
+    <button id="voiceBtn" class="btn-voice">🎤 DICTAR</button>
+    <input type="text" id="itemInput">
 
-    <div id="listContainer" class="item-list"></div>
+    <div id="listContainer"></div>
+    <button class="clear" onclick="clearChecked()">Borrar productos marcados</button>
+</div>
 
-    <div id="debugLog">Estado: Listo. Esperando interacción.</div>
+<script>
+    let sections = JSON.parse(localStorage.getItem('compraV4')) || [];
+    const voiceBtn = document.getElementById('voiceBtn');
+    const input = document.getElementById('itemInput');
 
-    <script>
-        const debug = document.getElementById('debugLog');
-        const voiceBtn = document.getElementById('voiceBtn');
-        const input = document.getElementById('itemInput');
-        
-        let shoppingList = JSON.parse(localStorage.getItem('myShoppingList')) || [];
+    voiceBtn.onclick = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return alert("Micro no compatible");
+        const rec = new SpeechRecognition();
+        rec.lang = 'es-ES';
+        rec.onstart = () => { voiceBtn.classList.add('listening'); voiceBtn.innerText = "🔴 ESCUCHANDO..."; };
+        rec.onend = () => { voiceBtn.classList.remove('listening'); voiceBtn.innerText = "🎤 DICTAR"; };
+        rec.onresult = (e) => {
+            input.value = e.results[0][0].transcript;
+            addItem();
+        };
+        rec.start();
+    };
 
-        function log(msg) {
-            const now = new Date();
-            const time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
-            debug.innerHTML += `<br>[${time}] ${msg}`;
-            debug.scrollTop = debug.scrollHeight;
+    function addItem() {
+        let val = input.value.trim().toLowerCase();
+        if (!val) return;
+
+        let storeName = "GENERAL";
+        let person = "";
+        let productName = val;
+
+        // Lógica de "para"
+        if (val.includes(" para ")) {
+            let parts = val.split(" para ");
+            person = parts[1].trim();
+            productName = parts[0].trim();
         }
 
-        // --- LÓGICA DE VOZ ---
-        voiceBtn.addEventListener('click', () => {
-            log("Iniciando...");
-            
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            
-            if (!SpeechRecognition) {
-                log("Error: Navegador no compatible.");
-                alert("Tu navegador no soporta voz. Prueba con Chrome.");
-                return;
-            }
-
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'es-ES';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            recognition.onstart = () => {
-                log("Servicio iniciado. Habla ahora...");
-                voiceBtn.classList.add('listening');
-                voiceBtn.innerText = "🔴 ESCUCHANDO...";
-            };
-
-            recognition.onresult = (event) => {
-                const text = event.results[0][0].transcript;
-                log("Escuchado: " + text);
-                input.value = text;
-                addItem();
-            };
-
-            recognition.onerror = (e) => {
-                log("ERROR DETECTADO: " + e.error);
-                // Si sale service-not-allowed, forzamos un reset visual
-                voiceBtn.classList.remove('listening');
-                voiceBtn.innerText = "🎤 TOCAR Y HABLAR";
-            };
-
-            recognition.onend = () => {
-                log("Servicio finalizado.");
-                voiceBtn.classList.remove('listening');
-                voiceBtn.innerText = "🎤 TOCAR Y HABLAR";
-            };
-
-            try {
-                recognition.start();
-            } catch (err) {
-                log("Error al arrancar: " + err.message);
-            }
-        });
-
-        // --- LÓGICA DE LA LISTA ---
-        function addItem() {
-            const val = input.value.trim();
-            if (!val) return;
-
-            const name = val.charAt(0).toUpperCase() + val.slice(1);
-            shoppingList.push({ name, checked: false });
-            input.value = '';
-            renderList();
+        // Lógica de "de" o "en"
+        const storeMatch = productName.match(/(?: de | en )(.+)/);
+        if (storeMatch) {
+            storeName = storeMatch[1].trim().toUpperCase();
+            productName = productName.split(storeMatch[0])[0].trim();
         }
 
-        function renderList() {
-            const container = document.getElementById('listContainer');
-            container.innerHTML = '';
-            
-            shoppingList.forEach((item, idx) => {
-                const div = document.createElement('div');
-                div.className = 'item';
-                div.innerHTML = `
-                    <input type="checkbox" ${item.checked ? 'checked' : ''} onclick="toggle(${idx})">
-                    <span style="${item.checked ? 'text-decoration:line-through;color:grey' : ''}">${item.name}</span>
-                    <div class="delete-btn" onclick="removeItem(${idx})">✕</div>
+        let finalTitle = person ? `${storeName} (${person.toUpperCase()})` : storeName.toUpperCase();
+        productName = productName.charAt(0).toUpperCase() + productName.slice(1);
+
+        let section = sections.find(s => s.title === finalTitle);
+        if (!section) {
+            section = { title: finalTitle, items: [] };
+            sections.push(section);
+        }
+
+        section.items.push({ name: productName, checked: false });
+        input.value = '';
+        render();
+    }
+
+    function render() {
+        const container = document.getElementById('listContainer');
+        container.innerHTML = '';
+
+        sections.forEach((sec, sIdx) => {
+            if (sec.items.length === 0) return;
+            const divSec = document.createElement('div');
+            divSec.className = 'store-section';
+            divSec.innerHTML = `<div class="store-title">${sec.title}</div>`;
+
+            sec.items.forEach((item, iIdx) => {
+                const divItem = document.createElement('div');
+                divItem.className = 'item';
+                divItem.innerHTML = `
+                    <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggle(${sIdx}, ${iIdx})">
+                    <span style="${item.checked ? 'text-decoration:line-through;color:#bbb' : ''}">${item.name}</span>
+                    <div class="del" onclick="remove(${sIdx}, ${iIdx})">✕</div>
                 `;
-                container.appendChild(div);
+                divSec.appendChild(divItem);
             });
-            localStorage.setItem('myShoppingList', JSON.stringify(shoppingList));
-        }
+            container.appendChild(divSec);
+        });
+        localStorage.setItem('compraV4', JSON.stringify(sections));
+    }
 
-        function toggle(idx) {
-            shoppingList[idx].checked = !shoppingList[idx].checked;
-            renderList();
-        }
+    function toggle(sIdx, iIdx) { sections[sIdx].items[iIdx].checked = !sections[sIdx].items[iIdx].checked; render(); }
+    function remove(sIdx, iIdx) { 
+        sections[sIdx].items.splice(iIdx, 1); 
+        if (sections[sIdx].items.length === 0) sections.splice(sIdx, 1); 
+        render(); 
+    }
+    function clearChecked() {
+        sections.forEach(sec => sec.items = sec.items.filter(i => !i.checked));
+        sections = sections.filter(sec => sec.items.length > 0);
+        render();
+    }
 
-        function removeItem(idx) {
-            shoppingList.splice(idx, 1);
-            renderList();
-        }
+    render();
+</script>
 
-        // Enter para añadir
-        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') addItem(); });
-
-        renderList();
-    </script>
 </body>
 </html>
