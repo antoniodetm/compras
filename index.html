@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lista de Compra - Test Forzado</title>
+    <title>Lista Compra - Fix Service</title>
     <style>
         :root { --primary: #3498db; --danger: #e74c3c; --bg: #f2f2f7; }
         body { font-family: sans-serif; margin: 0; padding: 10px; background: var(--bg); text-align: left; }
@@ -11,125 +11,144 @@
         .btn-voice { 
             width: 100%; padding: 20px; background: var(--danger); color: white; 
             border: none; border-radius: 15px; font-size: 1.2rem; font-weight: bold;
-            margin-bottom: 10px; touch-action: manipulation;
+            margin-bottom: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
         }
 
         .input-row { display: flex; gap: 5px; margin-bottom: 10px; }
         input { flex: 1; padding: 15px; border-radius: 10px; border: 1px solid #ccc; font-size: 1rem; }
-        .btn-add { background: var(--primary); color: white; border: none; border-radius: 10px; width: 60px; }
+        .btn-add { background: var(--primary); color: white; border: none; border-radius: 10px; width: 60px; font-weight: bold; }
 
-        .item { 
-            background: white; margin-bottom: 5px; padding: 12px; 
-            border-radius: 10px; display: flex; align-items: center; justify-content: flex-start; gap: 10px;
-        }
-        .item-text { flex: 1; text-align: left; font-size: 1.1rem; }
+        .store-section { background: white; border-radius: 12px; padding: 10px; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .store-title { font-size: 0.8rem; font-weight: 800; color: #007aff; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #eee; }
         
-        /* Consola de errores para diagnóstico */
-        #debug-console { 
-            margin-top: 20px; padding: 10px; background: #ffeeee; 
-            border: 1px solid #ffcccc; color: red; font-size: 0.8rem; border-radius: 5px;
-        }
+        .item { display: flex; align-items: center; justify-content: flex-start; padding: 10px 0; gap: 12px; border-bottom: 1px solid #f9f9f9; }
+        .item-text { flex: 1; text-align: left; font-size: 1.1rem; }
+        .check { width: 24px; height: 24px; }
+        .del { color: #ccc; font-size: 1.4rem; padding-left: 10px; }
+
+        #debug-console { margin-top: 20px; padding: 10px; background: #333; color: #fff; font-size: 0.7rem; border-radius: 5px; overflow-y: auto; max-height: 60px; }
     </style>
 </head>
 <body>
 
-    <button id="voiceBtn" class="btn-voice">🎤 PULSAR PARA HABLAR</button>
+    <button id="voiceBtn" class="btn-voice">🎤 PULSAR PARA DICTAR</button>
     
     <div class="input-row">
-        <input type="text" id="itemInput" placeholder="Escribe o dicta aquí...">
+        <input type="text" id="itemInput" placeholder="Ej: Pan en Lidl">
         <button class="btn-add" onclick="addItem()">OK</button>
     </div>
 
     <div id="listContainer"></div>
-    
-    <div id="debug-console">Estado: Esperando interacción...</div>
+    <div id="debug-console">Consola: Lista para iniciar...</div>
 
 <script>
     const btn = document.getElementById('voiceBtn');
     const debug = document.getElementById('debug-console');
     let recognition = null;
 
-    function log(msg) { debug.innerText = "Estado: " + msg; }
+    function log(msg) { debug.innerText = "Log: " + msg; }
 
-    try {
+    // Función para crear el motor de voz
+    function createRecognition() {
         const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!Speech) {
-            log("ERROR: Tu navegador no soporta SpeechRecognition.");
-        } else {
-            recognition = new Speech();
-            recognition.lang = 'es-ES';
-            recognition.continuous = false;
-
-            recognition.onstart = () => {
-                log("Escuchando... hable ahora.");
-                btn.style.background = "black";
-                btn.innerText = "🔴 ESCUCHANDO...";
-            };
-
-            recognition.onresult = (e) => {
-                const result = e.results[0][0].transcript;
-                document.getElementById('itemInput').value = result;
-                log("Recibido: " + result);
-                addItem();
-            };
-
-            recognition.onerror = (e) => {
-                log("ERROR de reconocimiento: " + e.error);
-                stopUI();
-            };
-
-            recognition.onend = () => {
-                log("Micrófono cerrado.");
-                stopUI();
-            };
+            log("Navegador no compatible.");
+            return null;
         }
-    } catch (e) {
-        log("Error crítico: " + e.message);
+        
+        const rec = new Speech();
+        rec.lang = 'es-ES';
+        rec.continuous = false;
+        rec.interimResults = false;
+
+        rec.onstart = () => {
+            btn.innerText = "🔴 ESCUCHANDO...";
+            btn.style.background = "black";
+            log("Servicio activo...");
+        };
+
+        rec.onresult = (e) => {
+            const result = e.results[0][0].transcript;
+            document.getElementById('itemInput').value = result;
+            addItem();
+        };
+
+        rec.onerror = (e) => {
+            log("ERROR: " + e.error);
+            if(e.error === 'service-not-allowed') {
+                alert("CONSEJO: Estás en un navegador restringido. Por favor, copia la dirección y ábrela directamente en la APP de CHROME o SAFARI.");
+            }
+            stopUI();
+        };
+
+        rec.onend = () => { stopUI(); };
+        return rec;
     }
 
     function stopUI() {
+        btn.innerText = "🎤 PULSAR PARA DICTAR";
         btn.style.background = "var(--danger)";
-        btn.innerText = "🎤 PULSAR PARA HABLAR";
     }
 
-    // Usamos pointerdown para que sea más sensible que el click
-    btn.addEventListener('pointerdown', () => {
-        if (!recognition) return;
+    // El evento 'click' es el más compatible para permisos
+    btn.onclick = () => {
+        if (!recognition) recognition = createRecognition();
         try {
             recognition.start();
         } catch (e) {
             recognition.stop();
-            log("Reiniciando...");
+            log("Re-intentando...");
         }
-    });
+    };
 
-    let shoppingList = JSON.parse(localStorage.getItem('myList')) || [];
+    // --- LÓGICA DE LISTA ---
+    let shoppingList = JSON.parse(localStorage.getItem('myShoppingList')) || [];
 
-    function render() {
+    function renderList() {
         const container = document.getElementById('listContainer');
         container.innerHTML = '';
-        shoppingList.forEach((item, i) => {
-            container.innerHTML += `
-                <div class="item">
-                    <input type="checkbox" onclick="toggle(${i})">
-                    <span class="item-text">${item}</span>
-                    <span onclick="remove(${i})">✕</span>
-                </div>`;
-        });
-        localStorage.setItem('myList', JSON.stringify(shoppingList));
+        const grouped = shoppingList.reduce((acc, item) => {
+            if (!acc[item.store]) acc[item.store] = [];
+            acc[item.store].push(item);
+            return acc;
+        }, {});
+
+        for (const store in grouped) {
+            const section = document.createElement('div');
+            section.className = 'store-section';
+            section.innerHTML = `<div class="store-title">${store}</div>`;
+            grouped[store].forEach(item => {
+                const idx = shoppingList.indexOf(item);
+                section.innerHTML += `
+                    <div class="item">
+                        <input type="checkbox" class="check" ${item.checked ? 'checked' : ''} onclick="toggle(${idx})">
+                        <span class="item-text" style="${item.checked ? 'text-decoration:line-through;opacity:0.5' : ''}">${item.name}</span>
+                        <span class="del" onclick="remove(${idx})">✕</span>
+                    </div>`;
+            });
+            container.appendChild(section);
+        }
+        localStorage.setItem('myShoppingList', JSON.stringify(shoppingList));
     }
 
     function addItem() {
         const input = document.getElementById('itemInput');
-        if (input.value.trim()) {
-            shoppingList.push(input.value.trim());
-            input.value = '';
-            render();
+        let text = input.value.trim();
+        if (!text) return;
+        let name = text, store = "GENERAL";
+        if (name.toLowerCase().includes(" en ")) {
+            const parts = name.split(/ en /i);
+            name = parts[0].trim();
+            store = parts[1].trim().toUpperCase();
         }
+        shoppingList.push({ name: name, store: store, checked: false });
+        input.value = '';
+        renderList();
     }
 
-    function remove(i) { shoppingList.splice(i, 1); render(); }
-    render();
+    function toggle(i) { shoppingList[i].checked = !shoppingList[i].checked; renderList(); }
+    function remove(i) { shoppingList.splice(i, 1); renderList(); }
+    renderList();
 </script>
 </body>
 </html>
