@@ -2,17 +2,17 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lista de Compra por Voz</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 20px; background: #f0f2f5; color: #1a1a1a; }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; }
         .controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
         .input-row { display: flex; gap: 8px; }
-        input { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 12px; font-size: 16px; outline: none; }
+        input { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 12px; font-size: 16px; outline: none; -webkit-appearance: none; }
         input:focus { border-color: #3498db; }
         
-        button { padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button { padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; touch-action: manipulation; }
         .btn-add { background: #3498db; color: white; flex: 0.3; }
         .btn-voice { background: #e74c3c; color: white; width: 100%; font-size: 1.1em; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-voice.listening { background: #ffbd2e; animation: pulse 1.5s infinite; color: #000; }
@@ -25,7 +25,7 @@
         .item:last-child { border-bottom: none; }
         .item span { flex: 1; margin-left: 12px; font-size: 1.05em; }
         .delete-btn { color: #ccc; padding: 5px 10px; font-size: 1.2em; }
-        .check { width: 22px; height: 22px; accent-color: #27ae60; }
+        .check { width: 24px; height: 24px; accent-color: #27ae60; }
         .clear-all { background: none; color: #95a5a6; font-size: 0.9em; text-decoration: underline; margin-top: 20px; width: 100%; }
     </style>
 </head>
@@ -49,22 +49,20 @@
     <script>
         let shoppingList = JSON.parse(localStorage.getItem('myShoppingList')) || [
             { name: "Café", store: "Básicos", checked: false },
-            { name: "Leche (sin azúcar)", store: "Básicos", checked: false },
-            { name: "Pan Integral", store: "Básicos", checked: false },
-            { name: "Aceite de Oliva VE", store: "Básicos", checked: false }
+            { name: "Leche", store: "Básicos", checked: false }
         ];
 
-        // Función principal de Voz corregida para móviles
         function startVoice() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
             if (!SpeechRecognition) {
-                alert("Tu navegador no soporta dictado por voz. Intenta con Chrome o Safari actualizado.");
+                alert("Tu navegador no soporta voz. En iPhone usa Safari, en Android usa Chrome.");
                 return;
             }
 
             const recognition = new SpeechRecognition();
             recognition.lang = 'es-ES';
+            recognition.continuous = false;
             recognition.interimResults = false;
 
             recognition.onstart = () => {
@@ -80,9 +78,17 @@
             };
 
             recognition.onerror = (event) => {
-                console.error("Error de reconocimiento: ", event.error);
-                if(event.error === 'not-allowed') {
-                    alert("Permiso de micrófono denegado. Revisa los ajustes de tu navegador.");
+                const btn = document.getElementById('voiceBtn');
+                btn.classList.remove('listening');
+                btn.innerText = "🎤 Pulsar para dictar";
+                
+                // Mensajes de diagnóstico para ayudarte a saber por qué no funciona
+                if (event.error === 'not-allowed') {
+                    alert("ERROR: El navegador no tiene permiso para usar el micro. Revisa los ajustes de Privacidad de tu móvil.");
+                } else if (event.error === 'network') {
+                    alert("ERROR: Necesitas conexión a internet para usar la voz.");
+                } else {
+                    console.error("Error de voz:", event.error);
                 }
             };
 
@@ -92,7 +98,12 @@
                 btn.innerText = "🎤 Pulsar para dictar";
             };
 
-            recognition.start();
+            // Intentar iniciar el reconocimiento
+            try {
+                recognition.start();
+            } catch (e) {
+                alert("No se pudo iniciar el micro: " + e.message);
+            }
         }
 
         function renderList() {
@@ -145,7 +156,7 @@
             renderList();
         }
 
-        // Soporte para tecla Enter al escribir manualmente
+        // Soporte para teclado (Enter)
         document.getElementById('itemInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addItem();
         });
