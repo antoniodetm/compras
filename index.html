@@ -54,17 +54,23 @@
             { name: "Aceite de Oliva VE", store: "Básicos", checked: false }
         ];
 
-        // Configuración de Reconocimiento de Voz
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+        // Función principal de Voz corregida para móviles
+        function startVoice() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                alert("Tu navegador no soporta dictado por voz. Intenta con Chrome o Safari actualizado.");
+                return;
+            }
 
-        if (recognition) {
+            const recognition = new SpeechRecognition();
             recognition.lang = 'es-ES';
             recognition.interimResults = false;
 
             recognition.onstart = () => {
-                document.getElementById('voiceBtn').classList.add('listening');
-                document.getElementById('voiceBtn').innerText = "🔴 Escuchando...";
+                const btn = document.getElementById('voiceBtn');
+                btn.classList.add('listening');
+                btn.innerText = "🔴 Escuchando...";
             };
 
             recognition.onresult = (event) => {
@@ -73,17 +79,19 @@
                 addItem();
             };
 
-            recognition.onend = () => {
-                document.getElementById('voiceBtn').classList.remove('listening');
-                document.getElementById('voiceBtn').innerText = "🎤 Pulsar para dictar";
+            recognition.onerror = (event) => {
+                console.error("Error de reconocimiento: ", event.error);
+                if(event.error === 'not-allowed') {
+                    alert("Permiso de micrófono denegado. Revisa los ajustes de tu navegador.");
+                }
             };
-        }
 
-        function startVoice() {
-            if (!recognition) {
-                alert("Tu navegador no soporta dictado por voz.");
-                return;
-            }
+            recognition.onend = () => {
+                const btn = document.getElementById('voiceBtn');
+                btn.classList.remove('listening');
+                btn.innerText = "🎤 Pulsar para dictar";
+            };
+
             recognition.start();
         }
 
@@ -136,6 +144,11 @@
             input.value = '';
             renderList();
         }
+
+        // Soporte para tecla Enter al escribir manualmente
+        document.getElementById('itemInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addItem();
+        });
 
         function toggleCheck(index) {
             shoppingList[index].checked = !shoppingList[index].checked;
