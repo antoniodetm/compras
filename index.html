@@ -5,39 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lista Compra</title>
     <style>
-        body { font-family: sans-serif; margin: 10px; background: #f0f2f5; color: #333; text-align: left; }
+        body { font-family: sans-serif; margin: 8px; background: #f0f2f5; color: #333; text-align: left; }
         .container { max-width: 500px; margin: 0 auto; }
         
-        /* Botón gigante arriba */
+        /* Botón DICTAR */
         .btn-voice { 
             width: 100%; 
-            padding: 25px; 
+            padding: 18px; 
             background: #e74c3c; 
             color: white; 
             border: none; 
-            border-radius: 12px; 
-            font-size: 1.5rem; 
+            border-radius: 10px; 
+            font-size: 1.3rem; 
             font-weight: 800; 
-            margin-bottom: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
         }
         .btn-voice.listening { background: #f1c40f; color: black; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
-        /* Estilo de las listas por comercio */
-        .store-section { background: white; border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .store-title { font-size: 0.75rem; font-weight: bold; color: #2980b9; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 8px; }
+        /* Secciones compactas */
+        .store-section { background: white; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .store-title { font-size: 0.65rem; font-weight: bold; color: #2980b9; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 2px; margin-bottom: 4px; }
         
-        .item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
+        /* PRODUCTO ULTRA COMPACTO */
+        .item { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid #fcfcfc; }
         .item:last-child { border-bottom: none; }
-        .item span { flex: 1; font-size: 1.1rem; }
+        .item span { flex: 1; font-size: 1rem; line-height: 1.2; }
         
-        input[type="checkbox"] { width: 22px; height: 22px; accent-color: #27ae60; }
-        .del { color: #ddd; font-size: 1.3rem; padding-left: 10px; }
+        input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; margin: 0; }
+        .del { color: #eee; font-size: 1.1rem; padding-left: 5px; }
         
-        .clear { background: none; border: none; color: #95a5a6; font-size: 0.85rem; text-decoration: underline; margin-top: 20px; width: 100%; text-align: left; padding: 10px 0; }
-        
-        /* Ocultamos el input manual pero lo dejamos funcional para el sistema */
+        .clear { background: none; border: none; color: #95a5a6; font-size: 0.75rem; text-decoration: underline; margin-top: 10px; width: 100%; text-align: left; }
         #itemInput { display: none; }
     </style>
 </head>
@@ -52,7 +51,7 @@
 </div>
 
 <script>
-    let sections = JSON.parse(localStorage.getItem('compraV4')) || [];
+    let sections = JSON.parse(localStorage.getItem('compraV5')) || [];
     const voiceBtn = document.getElementById('voiceBtn');
     const input = document.getElementById('itemInput');
 
@@ -78,14 +77,12 @@
         let person = "";
         let productName = val;
 
-        // Lógica de "para"
         if (val.includes(" para ")) {
             let parts = val.split(" para ");
             person = parts[1].trim();
             productName = parts[0].trim();
         }
 
-        // Lógica de "de" o "en"
         const storeMatch = productName.match(/(?: de | en )(.+)/);
         if (storeMatch) {
             storeName = storeMatch[1].trim().toUpperCase();
@@ -109,26 +106,24 @@
     function render() {
         const container = document.getElementById('listContainer');
         container.innerHTML = '';
-
         sections.forEach((sec, sIdx) => {
             if (sec.items.length === 0) return;
             const divSec = document.createElement('div');
             divSec.className = 'store-section';
             divSec.innerHTML = `<div class="store-title">${sec.title}</div>`;
-
             sec.items.forEach((item, iIdx) => {
                 const divItem = document.createElement('div');
                 divItem.className = 'item';
                 divItem.innerHTML = `
                     <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggle(${sIdx}, ${iIdx})">
-                    <span style="${item.checked ? 'text-decoration:line-through;color:#bbb' : ''}">${item.name}</span>
+                    <span style="${item.checked ? 'text-decoration:line-through;color:#ccc' : ''}">${item.name}</span>
                     <div class="del" onclick="remove(${sIdx}, ${iIdx})">✕</div>
                 `;
                 divSec.appendChild(divItem);
             });
             container.appendChild(divSec);
         });
-        localStorage.setItem('compraV4', JSON.stringify(sections));
+        localStorage.setItem('compraV5', JSON.stringify(sections));
     }
 
     function toggle(sIdx, iIdx) { sections[sIdx].items[iIdx].checked = !sections[sIdx].items[iIdx].checked; render(); }
@@ -142,9 +137,7 @@
         sections = sections.filter(sec => sec.items.length > 0);
         render();
     }
-
     render();
 </script>
-
 </body>
 </html>
