@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lista de Compras Izquierda</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #27ae60;
+            --danger: #e74c3c;
+            --bg: #f2f2f7;
+        }
+
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            margin: 0; padding: 5px; 
+            background: var(--bg); color: #1c1c1e;
+        }
+
+        .header { position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 5px; }
+        
+        .btn-voice { 
+            width: 100%; padding: 12px; background: var(--danger); color: white; 
+            border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold;
+            margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .input-row { display: flex; gap: 4px; }
+        input { 
+            flex: 1; border-radius: 8px; border: 1px solid #ccc; padding: 10px; 
+            font-size: 1.1rem; outline: none;
+        }
+        .btn-add { background: var(--primary); color: white; border: none; border-radius: 8px; width: 50px; font-weight: bold; }
+
+        .store-section { 
+            background: white; 
+            border-radius: 10px; 
+            padding: 8px 12px; 
+            margin-top: 8px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Títulos alineados a la izquierda */
+        .store-title { 
+            font-size: 0.8rem; font-weight: 800; color: #007aff; 
+            text-transform: uppercase; margin-bottom: 6px;
+            border-bottom: 1px solid #f2f2f7;
+            text-align: left; 
+        }
+        
+        .list-inner { display: flex; flex-direction: column; }
+
+        /* Contenedor principal del ítem: Todo al inicio (izquierda) */
+        .item { 
+            display: flex; 
+            align-items: center; 
+            justify-content: flex-start; 
+            padding: 8px 0; 
+            gap: 12px;
+        }
+
+        .item.checked { opacity: 0.4; }
+
+        /* Contenido (Checkbox + Texto) alineado a la izquierda */
+        .item-content { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+            /* Quitamos flex:1 para que no empuje el botón de borrar al final */
+        }
+        
+        .item-text { 
+            font-size: 1.1rem; 
+            font-weight: 500;
+            text-align: left;
+        }
+        
+        .checked-text { text-decoration: line-through; }
+        .check { width: 22px; height: 22px; accent-color: var(--secondary); flex-shrink: 0; }
+        
+        /* Botón de borrar pegado al texto, no a la derecha */
+        .del { 
+            color: #d1d1d6; 
+            font-size: 1.1rem; 
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        .clear-btn { 
+            width: 100%; padding: 12px; background: none; border: 1px solid #ccc; 
+            color: #8e8e93; border-radius: 10px; margin-top: 20px; font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <button id="voiceBtn" class="btn-voice" onclick="startVoice()">🎤 DICTAR</button>
+    <div class="input-row">
+        <input type="text" id="itemInput" placeholder="Ej: Manzanas en Lidl">
+        <button class="btn-add" onclick="addItem()">OK</button>
+    </div>
+</div>
+
+<div id="listContainer"></div>
+<button class="clear-btn" onclick="clearChecked()">Limpiar comprados</button>
+
+<script>
+    let shoppingList = JSON.parse(localStorage.getItem('myShoppingList')) || [];
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+    if (recognition) {
+        recognition.lang = 'es-ES';
+        recognition.onstart = () => { document.getElementById('voiceBtn').innerText = "🔴 ESCUCHANDO..."; };
+        recognition.onresult = (e) => { document.getElementById('itemInput').value = e.results[0][0].transcript; addItem(); };
+        recognition.onend = () => { document.getElementById('voiceBtn').innerText = "🎤 DICTAR"; };
+    }
+
+    function startVoice() { recognition ? recognition.start() : alert("No disponible"); }
+
+    function renderList() {
+        const container = document.getElementById('listContainer');
+        container.innerHTML = '';
+        
+        const grouped = shoppingList.reduce((acc, item) => {
+            if (!acc[item.store]) acc[item.store] = [];
+            acc[item.store].push(item);
+            return acc;
+        }, {});
+
+        for (const store in grouped) {
+            const section = document.createElement('div');
+            section.className = 'store-section';
+            section.innerHTML = `<div class="store-title">${store}</div>`;
+            
+            const listDiv = document.createElement('div');
+            listDiv.className = 'list-inner';
+            
+            const sortedItems = grouped[store].sort((a, b) => a.checked - b.checked);
+
+            sortedItems.forEach(item => {
+                const originalIdx = shoppingList.indexOf(item);
+                const div = document.createElement('div');
+                div.className = `item ${item.checked ? 'checked' : ''}`;
+                div.innerHTML = `
+                    <div class="item-content" onclick="toggleCheck(${originalIdx})">
+                        <input type="checkbox" class="check" ${item.checked ? 'checked' : ''} readonly>
+                        <span class="item-text ${item.checked ? 'checked-text' : ''}">${item.name}</span>
+                    </div>
+                    <div class="del" onclick="removeItem(${originalIdx})">✕</div>
+                `;
+                listDiv.appendChild(div);
+            });
+            section.appendChild(listDiv);
+            container.appendChild(section);
+        }
+        localStorage.setItem('myShoppingList', JSON.stringify(shoppingList));
+    }
+
+    function addItem() {
+        const input = document.getElementById('itemInput');
+        let text = input.value.trim();
+        if (!text) return;
+        
+        let name = text, store = "GENERAL", person = "";
+
+        if (text.toLowerCase().includes(" para ")) {
+            const parts = text.split(/ para /i);
+            name = parts[0].trim();
+            person = parts[1].trim().toUpperCase();
+        }
+        if (name.toLowerCase().includes(" en ")) {
+            const parts = name.split(/ en /i);
+            name = parts[0].trim();
+            store = parts[1].trim().toUpperCase();
+        }
+
+        const finalStore = person ? `${store} (${person})` : store;
+        shoppingList.push({ name: name.charAt(0).toUpperCase() + name.slice(1), store: finalStore, checked: false });
+        input.value = '';
+        renderList();
+    }
+
+    function toggleCheck(i) { shoppingList[i].checked = !shoppingList[i].checked; renderList(); }
+    function removeItem(i) { shoppingList.splice(i, 1); renderList(); }
+    function clearChecked() { shoppingList = shoppingList.filter(it => !it.checked); renderList(); }
+
+    renderList();
+</script>
+</body>
+</html>
