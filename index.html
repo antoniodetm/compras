@@ -3,42 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lista Compra</title>
+    <title>Lista Compra Cloud</title>
     <style>
+        /* MANTENGO TU ESTILO EXACTO */
         body { font-family: sans-serif; margin: 8px; background: #f0f2f5; color: #333; text-align: left; }
         .container { max-width: 500px; margin: 0 auto; }
-        
-        /* Botón DICTAR */
-        .btn-voice { 
-            width: 100%; 
-            padding: 18px; 
-            background: #e74c3c; 
-            color: white; 
-            border: none; 
-            border-radius: 10px; 
-            font-size: 1.3rem; 
-            font-weight: 800; 
-            margin-bottom: 10px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-        }
+        .btn-voice { width: 100%; padding: 18px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
         .btn-voice.listening { background: #f1c40f; color: black; animation: pulse 1s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-
-        /* Secciones compactas */
         .store-section { background: white; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .store-title { font-size: 0.65rem; font-weight: bold; color: #2980b9; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 2px; margin-bottom: 4px; }
-        
-        /* PRODUCTO ULTRA COMPACTO */
         .item { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid #fcfcfc; }
-        .item:last-child { border-bottom: none; }
         .item span { flex: 1; font-size: 1rem; line-height: 1.2; }
-        
         input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; margin: 0; }
         .del { color: #eee; font-size: 1.1rem; padding-left: 5px; }
-        
         .footer-buttons { display: flex; justify-content: space-between; margin-top: 10px; }
-        .clear { background: none; border: none; color: #95a5a6; font-size: 0.75rem; text-decoration: underline; padding: 5px; }
-        .share { background: none; border: none; color: #27ae60; font-size: 0.75rem; text-decoration: underline; padding: 5px; font-weight: bold; }
+        .clear, .share { background: none; border: none; font-size: 0.75rem; text-decoration: underline; padding: 5px; }
+        .share { color: #27ae60; font-weight: bold; }
+        .clear { color: #95a5a6; }
         #itemInput { display: none; }
     </style>
 </head>
@@ -47,41 +29,52 @@
 <div class="container">
     <button id="voiceBtn" class="btn-voice">🎤 DICTAR</button>
     <input type="text" id="itemInput">
-
-    <div id="listContainer"></div>
-    
+    <div id="listContainer">Cargando lista...</div>
     <div class="footer-buttons">
         <button class="clear" onclick="clearChecked()">Borrar marcados</button>
-        <button class="share" onclick="shareWhatsApp()">Enviar por WhatsApp</button>
+        <button class="share" onclick="shareWhatsApp()">Enviar WhatsApp</button>
     </div>
 </div>
 
-<script>
-    let sections = JSON.parse(localStorage.getItem('compraV5')) || [];
-    const voiceBtn = document.getElementById('voiceBtn');
-    const input = document.getElementById('itemInput');
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    voiceBtn.onclick = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return alert("Micro no compatible");
-        const rec = new SpeechRecognition();
-        rec.lang = 'es-ES';
-        rec.onstart = () => { voiceBtn.classList.add('listening'); voiceBtn.innerText = "🔴 ESCUCHANDO..."; };
-        rec.onend = () => { voiceBtn.classList.remove('listening'); voiceBtn.innerText = "🎤 DICTAR"; };
-        rec.onresult = (e) => {
-            input.value = e.results[0][0].transcript;
-            addItem();
-        };
-        rec.start();
-    };
+    // CONFIGURACIÓN DE TU PROYECTO (Pega aquí lo del Paso 1)
+    const firebaseConfig = {
+  apiKey: "AIzaSyArwel_EcbrX8gFogXAwDOwlmUDqsi0hTA",
+  authDomain: "compras-58fd2.firebaseapp.com",
+  projectId: "compras-58fd2",
+  storageBucket: "compras-58fd2.firebasestorage.app",
+  messagingSenderId: "591579835512",
+  appId: "1:591579835512:web:8da32af8f587dbfafb918d",
+  measurementId: "G-EXCRMPVJ53"
+};
 
-    function addItem() {
-        let val = input.value.trim().toLowerCase();
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const listaRef = ref(db, 'compraV5');
+
+    let sections = [];
+
+    // ESCUCHAR CAMBIOS EN TIEMPO REAL
+    onValue(listaRef, (snapshot) => {
+        const data = snapshot.val();
+        sections = data || [];
+        render();
+    });
+
+    // GUARDAR EN FIREBASE
+    function save() {
+        set(listaRef, sections);
+    }
+
+    // TUS FUNCIONES ORIGINALES (Adaptadas mínimamente)
+    window.addItem = function() {
+        let val = document.getElementById('itemInput').value.trim().toLowerCase();
         if (!val) return;
 
-        let storeName = "GENERAL";
-        let person = "";
-        let productName = val;
+        let storeName = "GENERAL", person = "", productName = val;
 
         if (val.includes(" para ")) {
             let parts = val.split(" para ");
@@ -105,15 +98,15 @@
         }
 
         section.items.push({ name: productName, checked: false });
-        input.value = '';
-        render();
-    }
+        document.getElementById('itemInput').value = '';
+        save();
+    };
 
-    function render() {
+    window.render = function() {
         const container = document.getElementById('listContainer');
         container.innerHTML = '';
         sections.forEach((sec, sIdx) => {
-            if (sec.items.length === 0) return;
+            if (!sec.items || sec.items.length === 0) return;
             const divSec = document.createElement('div');
             divSec.className = 'store-section';
             divSec.innerHTML = `<div class="store-title">${sec.title}</div>`;
@@ -129,37 +122,43 @@
             });
             container.appendChild(divSec);
         });
-        localStorage.setItem('compraV5', JSON.stringify(sections));
     }
 
-    function toggle(sIdx, iIdx) { sections[sIdx].items[iIdx].checked = !sections[sIdx].items[iIdx].checked; render(); }
-    
-    function remove(sIdx, iIdx) { 
+    window.toggle = (sIdx, iIdx) => { sections[sIdx].items[iIdx].checked = !sections[sIdx].items[iIdx].checked; save(); };
+    window.remove = (sIdx, iIdx) => { 
         sections[sIdx].items.splice(iIdx, 1); 
         if (sections[sIdx].items.length === 0) sections.splice(sIdx, 1); 
-        render(); 
-    }
-
-    function clearChecked() {
+        save(); 
+    };
+    window.clearChecked = () => {
         sections.forEach(sec => sec.items = sec.items.filter(i => !i.checked));
         sections = sections.filter(sec => sec.items.length > 0);
-        render();
-    }
+        save();
+    };
 
-    function shareWhatsApp() {
-        if (sections.length === 0) return alert("Lista vacía");
-        let text = "*MI LISTA DE LA COMPRA* 🛒\n\n";
+    window.shareWhatsApp = () => {
+        let text = "*LISTA COMPRA* 🛒\n\n";
         sections.forEach(sec => {
             text += `*${sec.title}*\n`;
-            sec.items.forEach(item => {
-                text += `${item.checked ? '✅' : '☐'} ${item.name}\n`;
-            });
+            sec.items.forEach(i => text += `${i.checked ? '✅':'☐'} ${i.name}\n`);
             text += "\n";
         });
         window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(text));
-    }
+    };
 
-    render();
+    // RECONOCIMIENTO DE VOZ
+    document.getElementById('voiceBtn').onclick = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const rec = new SpeechRecognition();
+        rec.lang = 'es-ES';
+        rec.onstart = () => { voiceBtn.classList.add('listening'); voiceBtn.innerText = "🔴 ESCUCHANDO..."; };
+        rec.onend = () => { voiceBtn.classList.remove('listening'); voiceBtn.innerText = "🎤 DICTAR"; };
+        rec.onresult = (e) => {
+            document.getElementById('itemInput').value = e.results[0][0].transcript;
+            addItem();
+        };
+        rec.start();
+    };
 </script>
 </body>
 </html>
