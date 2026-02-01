@@ -14,153 +14,120 @@
 
         body { 
             font-family: -apple-system, system-ui, sans-serif; 
-            margin: 0; padding: 5px; 
+            margin: 0; padding: 10px; 
             background: var(--bg); color: #1c1c1e;
         }
 
-        .header { position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 5px; }
+        .header { position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 10px; }
         
         .btn-voice { 
-            width: 100%; padding: 12px; background: var(--danger); color: white; 
-            border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold;
-            margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 15px; background: var(--danger); color: white; 
+            border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold;
+            margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
             cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .input-row { display: flex; gap: 4px; }
+        .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
         input { 
-            flex: 1; border-radius: 8px; border: 1px solid #ccc; padding: 10px; 
-            font-size: 1.1rem; outline: none;
+            flex: 1; padding: 12px; border: 1px solid #c7c7cc; border-radius: 10px; 
+            font-size: 1rem; outline: none; 
         }
-        .btn-add { background: var(--primary); color: white; border: none; border-radius: 8px; width: 50px; font-weight: bold; cursor: pointer; }
-
-        .store-section { 
-            background: white; 
-            border-radius: 10px; 
-            padding: 8px 12px; 
-            margin-top: 8px; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        .btn-add { 
+            padding: 12px 20px; background: var(--primary); color: white; 
+            border: none; border-radius: 10px; font-weight: bold; 
         }
 
-        .store-title { 
-            font-size: 0.8rem; font-weight: 800; color: #007aff; 
-            text-transform: uppercase; margin-bottom: 6px;
-            border-bottom: 1px solid #f2f2f7;
-            text-align: left; 
-        }
+        .store-section { background: white; border-radius: 12px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .store-title { background: #e5e5ea; padding: 8px 15px; font-weight: bold; font-size: 0.9rem; color: #8e8e93; text-transform: uppercase; }
         
-        .list-inner { display: flex; flex-direction: column; }
-
         .item { 
-            display: flex; 
-            align-items: center; 
-            justify-content: flex-start; 
-            padding: 8px 0; 
-            gap: 12px;
+            display: flex; align-items: center; padding: 12px 15px; 
+            border-bottom: 1px solid #f2f2f7; 
         }
-
-        .item.checked { opacity: 0.4; }
-
-        .item-content { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px;
-        }
+        .item:last-child { border-bottom: none; }
         
-        .item-text { 
-            font-size: 1.1rem; 
-            font-weight: 500;
-            text-align: left;
-        }
+        .item-content { flex: 1; display: flex; align-items: center; gap: 12px; }
+        .check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #c7c7cc; appearance: none; outline: none; }
+        .check:checked { background: var(--secondary); border-color: var(--secondary); position: relative; }
+        .check:checked::after { content: '✓'; color: white; position: absolute; left: 4px; top: -1px; font-weight: bold; }
         
-        .checked-text { text-decoration: line-through; }
-        .check { width: 22px; height: 22px; accent-color: var(--secondary); flex-shrink: 0; }
+        .item-text { font-size: 1.05rem; }
+        .checked-text { text-decoration: line-through; color: #8e8e93; }
         
-        .del { 
-            color: #d1d1d6; 
-            font-size: 1.1rem; 
-            cursor: pointer;
-            padding: 0 5px;
-        }
+        .del { color: var(--danger); padding: 5px 10px; font-weight: bold; font-size: 1.2rem; cursor: pointer; }
 
-        .clear-btn { 
-            width: 100%; padding: 12px; background: none; border: 1px solid #ccc; 
-            color: #8e8e93; border-radius: 10px; margin-top: 20px; font-size: 0.9rem;
-        }
+        .footer-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-clear { flex: 1; padding: 12px; background: white; color: var(--danger); border: 1px solid var(--danger); border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <button id="voiceBtn" class="btn-voice" onclick="startVoice()">🎤 DICTAR</button>
-    <div class="input-row">
-        <input type="text" id="itemInput" placeholder="Ej: Leche en Lidl">
-        <button class="btn-add" onclick="addItem()">OK</button>
+    <div class="header">
+        <button class="btn-voice" onclick="startVoice()">🎤 Dictar Producto</button>
+        <div class="input-row">
+            <input type="text" id="itemInput" placeholder="Ej: Pan en Mercadona para Luis">
+            <button class="btn-add" onclick="addItem()">OK</button>
+        </div>
     </div>
-</div>
 
-<div id="listContainer"></div>
-<button class="clear-btn" onclick="clearChecked()">Limpiar comprados</button>
+    <div id="listContainer"></div>
+
+    <div class="footer-btns">
+        <button class="btn-clear" onclick="clearChecked()">Limpiar Comprados</button>
+    </div>
 
 <script>
     let shoppingList = JSON.parse(localStorage.getItem('myShoppingList')) || [];
 
-    // Configuración mejorada de voz
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition = null;
+    // Soporte para tecla Enter
+    document.getElementById('itemInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addItem();
+    });
 
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
+    function startVoice() {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        
+        // Configuración vital para iOS
         recognition.lang = 'es-ES';
-        recognition.continuous = false;
         recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
 
-        recognition.onstart = () => {
-            document.getElementById('voiceBtn').innerText = "🔴 ESCUCHANDO...";
-            document.getElementById('voiceBtn').style.background = "#c0392b";
-        };
+        const btn = document.querySelector('.btn-voice');
+        btn.textContent = "Escuchando...";
+        btn.style.background = "#ff9500";
 
-        recognition.onresult = (e) => {
-            const transcript = e.results[0][0].transcript;
-            document.getElementById('itemInput').value = transcript;
+        recognition.onresult = (event) => {
+            const result = event.results[0][0].transcript;
+            document.getElementById('itemInput').value = result;
             addItem();
         };
 
-        recognition.onerror = (e) => {
-            console.error("Error de reconocimiento:", e.error);
-            alert("Error de dictado: " + e.error + ". Asegúrate de usar HTTPS y dar permisos de micrófono.");
-            stopVoice();
+        recognition.onspeechend = () => {
+            recognition.stop();
         };
 
         recognition.onend = () => {
-            stopVoice();
+            btn.textContent = "🎤 Dictar Producto";
+            btn.style.background = "var(--danger)";
         };
-    }
 
-    function startVoice() {
-        if (!recognition) {
-            alert("Tu navegador no soporta dictado por voz. Prueba con Chrome o Safari.");
-            return;
-        }
-        try {
-            recognition.start();
-        } catch (e) {
-            recognition.stop();
-        }
-    }
+        recognition.onerror = (event) => {
+            console.error("Error de reconocimiento:", event.error);
+            btn.textContent = "🎤 Reintentar";
+            btn.style.background = "var(--danger)";
+        };
 
-    function stopVoice() {
-        document.getElementById('voiceBtn').innerText = "🎤 DICTAR";
-        document.getElementById('voiceBtn').style.background = "var(--danger)";
+        recognition.start();
     }
 
     function renderList() {
         const container = document.getElementById('listContainer');
         container.innerHTML = '';
         
-        const grouped = shoppingList.reduce((acc, item) => {
+        const grouped = shoppingList.reduce((acc, item, index) => {
             if (!acc[item.store]) acc[item.store] = [];
-            acc[item.store].push(item);
+            acc[item.store].push({ ...item, originalIndex: index });
             return acc;
         }, {});
 
@@ -172,18 +139,15 @@
             const listDiv = document.createElement('div');
             listDiv.className = 'list-inner';
             
-            const sortedItems = grouped[store].sort((a, b) => a.checked - b.checked);
-
-            sortedItems.forEach(item => {
-                const originalIdx = shoppingList.indexOf(item);
+            grouped[store].forEach((item) => {
                 const div = document.createElement('div');
-                div.className = `item ${item.checked ? 'checked' : ''}`;
+                div.className = 'item';
                 div.innerHTML = `
-                    <div class="item-content" onclick="toggleCheck(${originalIdx})">
+                    <div class="item-content" onclick="toggleCheck(${item.originalIndex})">
                         <input type="checkbox" class="check" ${item.checked ? 'checked' : ''} readonly>
                         <span class="item-text ${item.checked ? 'checked-text' : ''}">${item.name}</span>
                     </div>
-                    <div class="del" onclick="removeItem(${originalIdx})">✕</div>
+                    <div class="del" onclick="removeItem(${item.originalIndex})">✕</div>
                 `;
                 listDiv.appendChild(div);
             });
@@ -212,16 +176,33 @@
         }
 
         const finalStore = person ? `${store} (${person})` : store;
-        shoppingList.push({ name: name.charAt(0).toUpperCase() + name.slice(1), store: finalStore, checked: false });
+        shoppingList.push({ 
+            name: name.charAt(0).toUpperCase() + name.slice(1), 
+            store: finalStore, 
+            checked: false 
+        });
+        
         input.value = '';
         renderList();
     }
 
-    function toggleCheck(i) { shoppingList[i].checked = !shoppingList[i].checked; renderList(); }
-    function removeItem(i) { shoppingList.splice(i, 1); renderList(); }
-    function clearChecked() { shoppingList = shoppingList.filter(it => !it.checked); renderList(); }
+    function toggleCheck(i) { 
+        shoppingList[i].checked = !shoppingList[i].checked; 
+        renderList(); 
+    }
+
+    function removeItem(i) { 
+        shoppingList.splice(i, 1); 
+        renderList(); 
+    }
+
+    function clearChecked() {
+        shoppingList = shoppingList.filter(item => !item.checked);
+        renderList();
+    }
 
     renderList();
 </script>
+
 </body>
 </html>
