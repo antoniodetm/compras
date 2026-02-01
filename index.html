@@ -3,92 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lista Compra Voz</title>
+    <title>Lista Compra Inteligente</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; background: #f0f2f5; }
-        .controls { display: flex; flex-direction: column; gap: 10px; }
-        input { padding: 15px; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; }
-        button { padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-voice { background: #e74c3c; color: white; font-size: 1.2em; }
-        .btn-voice.listening { background: #ffbd2e; color: black; }
-        .item { background: white; padding: 10px; margin-top: 5px; border-radius: 5px; display: flex; align-items: center; justify-content: space-between; }
-        /* Consola de depuración para ver qué pasa en el móvil */
-        #debugLog { background: #333; color: #0f0; padding: 10px; font-family: monospace; font-size: 10px; margin-top: 20px; border-radius: 5px; max-height: 100px; overflow-y: auto; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 20px; background: #f4f7f6; color: #333; }
+        h2 { text-align: center; color: #2c3e50; }
+        
+        .controls { display: flex; flex-direction: column; gap: 12px; max-width: 500px; margin: 0 auto; }
+        
+        .btn-voice { 
+            background: #e74c3c; color: white; border: none; padding: 20px; 
+            border-radius: 15px; font-size: 1.2em; font-weight: bold; 
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); transition: 0.3s;
+        }
+        .btn-voice.listening { background: #f1c40f; color: #000; animation: pulse 1.5s infinite; }
+        
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(0.98); opacity: 0.8; } 100% { transform: scale(1); } }
+
+        .input-group { display: flex; gap: 8px; }
+        input { flex: 1; padding: 15px; border-radius: 12px; border: 2px solid #ddd; font-size: 16px; outline: none; }
+        .btn-add { background: #3498db; color: white; border: none; padding: 0 20px; border-radius: 12px; font-weight: bold; }
+
+        .item-list { margin-top: 25px; max-width: 500px; margin-left: auto; margin-right: auto; }
+        .item { 
+            background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .item span { flex: 1; margin-left: 10px; }
+        .delete-btn { color: #ccc; font-size: 1.5em; padding: 0 10px; cursor: pointer; }
+
+        #debugLog { 
+            background: #222; color: #2ecc71; padding: 10px; font-family: monospace; 
+            font-size: 11px; margin-top: 30px; border-radius: 8px; max-height: 120px; 
+            overflow-y: auto; border: 1px solid #444;
+        }
     </style>
 </head>
 <body>
 
-    <h2>🛒 Lista con Voz</h2>
+    <h2>🛒 Lista de Compra</h2>
     
     <div class="controls">
-        <button id="voiceBtn" class="btn-voice">🎤 PULSAR PARA HABLAR</button>
-        <div style="display:flex; gap:5px; margin-top:10px;">
-            <input type="text" id="itemInput" placeholder="Escribe aquí..." style="flex:1">
-            <button onclick="addItem()" style="background:#3498db; color:white;">OK</button>
+        <button id="voiceBtn" class="btn-voice">🎤 TOCAR Y HABLAR</button>
+        
+        <div class="input-group">
+            <input type="text" id="itemInput" placeholder="Añadir manualmente...">
+            <button class="btn-add" onclick="addItem()">OK</button>
         </div>
     </div>
 
-    <div id="listContainer" style="margin-top:20px;"></div>
-    
-    <div id="debugLog">Estado: Esperando clic...</div>
+    <div id="listContainer" class="item-list"></div>
+
+    <div id="debugLog">Estado: Listo. Esperando interacción.</div>
 
     <script>
         const debug = document.getElementById('debugLog');
-        function log(msg) { debug.innerHTML += "<br>> " + msg; debug.scrollTop = debug.scrollHeight; }
-
+        const voiceBtn = document.getElementById('voiceBtn');
+        const input = document.getElementById('itemInput');
+        
         let shoppingList = JSON.parse(localStorage.getItem('myShoppingList')) || [];
 
-        const voiceBtn = document.getElementById('voiceBtn');
+        function log(msg) {
+            const now = new Date();
+            const time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+            debug.innerHTML += `<br>[${time}] ${msg}`;
+            debug.scrollTop = debug.scrollHeight;
+        }
 
+        // --- LÓGICA DE VOZ ---
         voiceBtn.addEventListener('click', () => {
-            log("Botón pulsado. Iniciando SpeechRecognition...");
+            log("Iniciando...");
             
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
             if (!SpeechRecognition) {
-                log("ERROR: Tu navegador no soporta SpeechRecognition.");
-                alert("Navegador no compatible.");
+                log("Error: Navegador no compatible.");
+                alert("Tu navegador no soporta voz. Prueba con Chrome.");
                 return;
             }
 
             const recognition = new SpeechRecognition();
             recognition.lang = 'es-ES';
-            
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
             recognition.onstart = () => {
-                log("Micro activado: Escuchando...");
+                log("Servicio iniciado. Habla ahora...");
                 voiceBtn.classList.add('listening');
                 voiceBtn.innerText = "🔴 ESCUCHANDO...";
             };
 
             recognition.onresult = (event) => {
-                const texto = event.results[0][0].transcript;
-                log("Texto recibido: " + texto);
-                document.getElementById('itemInput').value = texto;
+                const text = event.results[0][0].transcript;
+                log("Escuchado: " + text);
+                input.value = text;
                 addItem();
             };
 
             recognition.onerror = (e) => {
-                log("ERROR de micro: " + e.error);
-                alert("Error: " + e.error);
+                log("ERROR DETECTADO: " + e.error);
+                // Si sale service-not-allowed, forzamos un reset visual
+                voiceBtn.classList.remove('listening');
+                voiceBtn.innerText = "🎤 TOCAR Y HABLAR";
             };
 
             recognition.onend = () => {
-                log("Micro cerrado.");
+                log("Servicio finalizado.");
                 voiceBtn.classList.remove('listening');
-                voiceBtn.innerText = "🎤 PULSAR PARA HABLAR";
+                voiceBtn.innerText = "🎤 TOCAR Y HABLAR";
             };
 
             try {
                 recognition.start();
             } catch (err) {
-                log("Excepción al iniciar: " + err.message);
+                log("Error al arrancar: " + err.message);
             }
         });
 
+        // --- LÓGICA DE LA LISTA ---
         function addItem() {
-            const input = document.getElementById('itemInput');
-            if (!input.value.trim()) return;
-            shoppingList.push({ name: input.value, checked: false });
+            const val = input.value.trim();
+            if (!val) return;
+
+            const name = val.charAt(0).toUpperCase() + val.slice(1);
+            shoppingList.push({ name, checked: false });
             input.value = '';
             renderList();
         }
@@ -96,19 +134,32 @@
         function renderList() {
             const container = document.getElementById('listContainer');
             container.innerHTML = '';
+            
             shoppingList.forEach((item, idx) => {
                 const div = document.createElement('div');
                 div.className = 'item';
-                div.innerHTML = `<span>${item.name}</span><button onclick="removeItem(${idx})">✕</button>`;
+                div.innerHTML = `
+                    <input type="checkbox" ${item.checked ? 'checked' : ''} onclick="toggle(${idx})">
+                    <span style="${item.checked ? 'text-decoration:line-through;color:grey' : ''}">${item.name}</span>
+                    <div class="delete-btn" onclick="removeItem(${idx})">✕</div>
+                `;
                 container.appendChild(div);
             });
             localStorage.setItem('myShoppingList', JSON.stringify(shoppingList));
         }
 
-        function removeItem(index) {
-            shoppingList.splice(index, 1);
+        function toggle(idx) {
+            shoppingList[idx].checked = !shoppingList[idx].checked;
             renderList();
         }
+
+        function removeItem(idx) {
+            shoppingList.splice(idx, 1);
+            renderList();
+        }
+
+        // Enter para añadir
+        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') addItem(); });
 
         renderList();
     </script>
