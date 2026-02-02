@@ -15,7 +15,10 @@
         .item { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid #fcfcfc; }
         .item span { flex: 1; font-size: 1rem; line-height: 1.2; }
         input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; margin: 0; }
-        .del { color: #eee; font-size: 1.1rem; padding-left: 5px; }
+        
+        /* Aspas de borrar un poco menos transparentes (#ccc en lugar de #eee) */
+        .del { color: #ccc; font-size: 1.1rem; padding-left: 5px; }
+        
         .footer-buttons { display: flex; justify-content: space-between; margin-top: 10px; }
         .clear, .share { background: none; border: none; font-size: 0.75rem; text-decoration: underline; padding: 5px; }
         .share { color: #27ae60; font-weight: bold; }
@@ -72,14 +75,12 @@
 
         let storeName = "GENERAL", person = "", productName = val;
 
-        // Detectar destinatario ("para")
         if (val.toLowerCase().includes(" para ")) {
             let parts = val.split(/ para /i);
             person = parts[1].trim();
             productName = parts[0].trim();
         }
 
-        // Detectar comercio SOLAMENTE con "en"
         const storeMatch = productName.match(/\s+en\s+(.+)/i);
         if (storeMatch) {
             storeName = storeMatch[1].trim().toUpperCase();
@@ -144,7 +145,6 @@
         window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(text));
     };
 
-    // RECONOCIMIENTO DE VOZ OPTIMIZADO PARA CERRARSE AL TERMINAR
     document.getElementById('voiceBtn').onclick = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -154,8 +154,8 @@
         
         const rec = new SpeechRecognition();
         rec.lang = 'es-ES';
-        rec.continuous = false;    // Se detiene al detectar una pausa final
-        rec.interimResults = false; // Solo procesa el resultado final
+        rec.continuous = false;
+        rec.interimResults = false;
 
         rec.onstart = () => { 
             voiceBtn.classList.add('listening'); 
@@ -173,11 +173,10 @@
                 document.getElementById('itemInput').value = result;
                 addItem();
             }
-            rec.stop(); // Fuerza el cierre inmediato tras captar la voz
+            rec.stop();
         };
 
         rec.onerror = () => { rec.stop(); };
-
         rec.start();
     };
 </script>
