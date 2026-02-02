@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lista Compra Cloud</title>
     <style>
-        /* MANTENGO TU ESTILO EXACTO */
         body { font-family: sans-serif; margin: 8px; background: #f0f2f5; color: #333; text-align: left; }
         .container { max-width: 500px; margin: 0 auto; }
         .btn-voice { width: 100%; padding: 18px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
@@ -40,17 +39,16 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // CONFIGURACIÓN DE TU PROYECTO (Pega aquí lo del Paso 1)
     const firebaseConfig = {
-  apiKey: "AIzaSyArwel_EcbrX8gFogXAwDOwlmUDqsi0hTA",
-  authDomain: "compras-58fd2.firebaseapp.com",
-databaseURL: "https://compras-58fd2-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "compras-58fd2",
-  storageBucket: "compras-58fd2.firebasestorage.app",
-  messagingSenderId: "591579835512",
-  appId: "1:591579835512:web:8da32af8f587dbfafb918d",
-  measurementId: "G-EXCRMPVJ53"
-};
+        apiKey: "AIzaSyArwel_EcbrX8gFogXAwDOwlmUDqsi0hTA",
+        authDomain: "compras-58fd2.firebaseapp.com",
+        databaseURL: "https://compras-58fd2-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "compras-58fd2",
+        storageBucket: "compras-58fd2.firebasestorage.app",
+        messagingSenderId: "591579835512",
+        appId: "1:591579835512:web:8da32af8f587dbfafb918d",
+        measurementId: "G-EXCRMPVJ53"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -58,32 +56,31 @@ databaseURL: "https://compras-58fd2-default-rtdb.europe-west1.firebasedatabase.a
 
     let sections = [];
 
-    // ESCUCHAR CAMBIOS EN TIEMPO REAL
     onValue(listaRef, (snapshot) => {
         const data = snapshot.val();
         sections = data || [];
         render();
     });
 
-    // GUARDAR EN FIREBASE
     function save() {
         set(listaRef, sections);
     }
 
-    // TUS FUNCIONES ORIGINALES (Adaptadas mínimamente)
     window.addItem = function() {
-        let val = document.getElementById('itemInput').value.trim().toLowerCase();
+        let val = document.getElementById('itemInput').value.trim();
         if (!val) return;
 
         let storeName = "GENERAL", person = "", productName = val;
 
-        if (val.includes(" para ")) {
-            let parts = val.split(" para ");
+        // Detectar destinatario ("para")
+        if (val.toLowerCase().includes(" para ")) {
+            let parts = val.split(/ para /i);
             person = parts[1].trim();
             productName = parts[0].trim();
         }
 
-        const storeMatch = productName.match(/(?: de | en )(.+)/);
+        // Detectar comercio SOLAMENTE con "en"
+        const storeMatch = productName.match(/\s+en\s+(.+)/i);
         if (storeMatch) {
             storeName = storeMatch[1].trim().toUpperCase();
             productName = productName.split(storeMatch[0])[0].trim();
@@ -147,17 +144,40 @@ databaseURL: "https://compras-58fd2-default-rtdb.europe-west1.firebasedatabase.a
         window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(text));
     };
 
-    // RECONOCIMIENTO DE VOZ
+    // RECONOCIMIENTO DE VOZ OPTIMIZADO PARA CERRARSE AL TERMINAR
     document.getElementById('voiceBtn').onclick = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Tu navegador no soporta reconocimiento de voz.");
+            return;
+        }
+        
         const rec = new SpeechRecognition();
         rec.lang = 'es-ES';
-        rec.onstart = () => { voiceBtn.classList.add('listening'); voiceBtn.innerText = "🔴 ESCUCHANDO..."; };
-        rec.onend = () => { voiceBtn.classList.remove('listening'); voiceBtn.innerText = "🎤 DICTAR"; };
-        rec.onresult = (e) => {
-            document.getElementById('itemInput').value = e.results[0][0].transcript;
-            addItem();
+        rec.continuous = false;    // Se detiene al detectar una pausa final
+        rec.interimResults = false; // Solo procesa el resultado final
+
+        rec.onstart = () => { 
+            voiceBtn.classList.add('listening'); 
+            voiceBtn.innerText = "🔴 ESCUCHANDO..."; 
         };
+
+        rec.onend = () => { 
+            voiceBtn.classList.remove('listening'); 
+            voiceBtn.innerText = "🎤 DICTAR"; 
+        };
+
+        rec.onresult = (e) => {
+            const result = e.results[0][0].transcript;
+            if (result) {
+                document.getElementById('itemInput').value = result;
+                addItem();
+            }
+            rec.stop(); // Fuerza el cierre inmediato tras captar la voz
+        };
+
+        rec.onerror = () => { rec.stop(); };
+
         rec.start();
     };
 </script>
