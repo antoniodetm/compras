@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lista Compra Cloud</title>
     <style>
+        /* MANTENGO TU ESTILO EXACTO */
         body { font-family: sans-serif; margin: 8px; background: #f0f2f5; color: #333; text-align: left; }
         .container { max-width: 500px; margin: 0 auto; }
         .btn-voice { width: 100%; padding: 18px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
@@ -15,10 +16,7 @@
         .item { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid #fcfcfc; }
         .item span { flex: 1; font-size: 1rem; line-height: 1.2; }
         input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; margin: 0; }
-        
-        /* Aspas de borrar un poco menos transparentes (#ccc en lugar de #eee) */
-        .del { color: #ccc; font-size: 1.1rem; padding-left: 5px; }
-        
+        .del { color: #eee; font-size: 1.1rem; padding-left: 5px; }
         .footer-buttons { display: flex; justify-content: space-between; margin-top: 10px; }
         .clear, .share { background: none; border: none; font-size: 0.75rem; text-decoration: underline; padding: 5px; }
         .share { color: #27ae60; font-weight: bold; }
@@ -36,22 +34,26 @@
         <button class="clear" onclick="clearChecked()">Borrar marcados</button>
         <button class="share" onclick="shareWhatsApp()">Enviar WhatsApp</button>
     </div>
+    <div style="text-align: center; margin-top: 20px; font-size: 0.8rem; color: #7f8c8d; font-style: italic;">
+        Producto EN establecimiento PARA persona
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+    // CONFIGURACIÓN DE TU PROYECTO (Pega aquí lo del Paso 1)
     const firebaseConfig = {
-        apiKey: "AIzaSyArwel_EcbrX8gFogXAwDOwlmUDqsi0hTA",
-        authDomain: "compras-58fd2.firebaseapp.com",
-        databaseURL: "https://compras-58fd2-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "compras-58fd2",
-        storageBucket: "compras-58fd2.firebasestorage.app",
-        messagingSenderId: "591579835512",
-        appId: "1:591579835512:web:8da32af8f587dbfafb918d",
-        measurementId: "G-EXCRMPVJ53"
-    };
+  apiKey: "AIzaSyArwel_EcbrX8gFogXAwDOwlmUDqsi0hTA",
+  authDomain: "compras-58fd2.firebaseapp.com",
+databaseURL: "https://compras-58fd2-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "compras-58fd2",
+  storageBucket: "compras-58fd2.firebasestorage.app",
+  messagingSenderId: "591579835512",
+  appId: "1:591579835512:web:8da32af8f587dbfafb918d",
+  measurementId: "G-EXCRMPVJ53"
+};
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -59,29 +61,32 @@
 
     let sections = [];
 
+    // ESCUCHAR CAMBIOS EN TIEMPO REAL
     onValue(listaRef, (snapshot) => {
         const data = snapshot.val();
         sections = data || [];
         render();
     });
 
+    // GUARDAR EN FIREBASE
     function save() {
         set(listaRef, sections);
     }
 
+    // TUS FUNCIONES ORIGINALES (Adaptadas mínimamente)
     window.addItem = function() {
-        let val = document.getElementById('itemInput').value.trim();
+        let val = document.getElementById('itemInput').value.trim().toLowerCase();
         if (!val) return;
 
         let storeName = "GENERAL", person = "", productName = val;
 
-        if (val.toLowerCase().includes(" para ")) {
-            let parts = val.split(/ para /i);
+        if (val.includes(" para ")) {
+            let parts = val.split(" para ");
             person = parts[1].trim();
             productName = parts[0].trim();
         }
 
-        const storeMatch = productName.match(/\s+en\s+(.+)/i);
+        const storeMatch = productName.match(/(?: de | en )(.+)/);
         if (storeMatch) {
             storeName = storeMatch[1].trim().toUpperCase();
             productName = productName.split(storeMatch[0])[0].trim();
@@ -145,38 +150,17 @@
         window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(text));
     };
 
+    // RECONOCIMIENTO DE VOZ
     document.getElementById('voiceBtn').onclick = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Tu navegador no soporta reconocimiento de voz.");
-            return;
-        }
-        
         const rec = new SpeechRecognition();
         rec.lang = 'es-ES';
-        rec.continuous = false;
-        rec.interimResults = false;
-
-        rec.onstart = () => { 
-            voiceBtn.classList.add('listening'); 
-            voiceBtn.innerText = "🔴 ESCUCHANDO..."; 
-        };
-
-        rec.onend = () => { 
-            voiceBtn.classList.remove('listening'); 
-            voiceBtn.innerText = "🎤 DICTAR"; 
-        };
-
+        rec.onstart = () => { voiceBtn.classList.add('listening'); voiceBtn.innerText = "🔴 ESCUCHANDO..."; };
+        rec.onend = () => { voiceBtn.classList.remove('listening'); voiceBtn.innerText = "🎤 DICTAR"; };
         rec.onresult = (e) => {
-            const result = e.results[0][0].transcript;
-            if (result) {
-                document.getElementById('itemInput').value = result;
-                addItem();
-            }
-            rec.stop();
+            document.getElementById('itemInput').value = e.results[0][0].transcript;
+            addItem();
         };
-
-        rec.onerror = () => { rec.stop(); };
         rec.start();
     };
 </script>
