@@ -1,168 +1,289 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lista Compra Cloud</title>
     <style>
         /* MANTENGO TU ESTILO EXACTO */
-        body { font-family: sans-serif; margin: 8px; background: #f0f2f5; color: #333; text-align: left; }
-        .container { max-width: 500px; margin: 0 auto; }
-        .btn-voice { width: 100%; padding: 18px; background: #e74c3c; color: white; border: none; border-radius: 10px; font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
-        .btn-voice.listening { background: #f1c40f; color: black; animation: pulse 1s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        .store-section { background: white; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .store-title { font-size: 0.65rem; font-weight: bold; color: #2980b9; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 2px; margin-bottom: 4px; }
-        .item { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid #fcfcfc; }
-        .item span { flex: 1; font-size: 1rem; line-height: 1.2; }
-        input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; margin: 0; }
-        .del { color: #eee; font-size: 1.1rem; padding-left: 5px; }
-        .footer-buttons { display: flex; justify-content: space-between; margin-top: 10px; }
-        .clear, .share { background: none; border: none; font-size: 0.75rem; text-decoration: underline; padding: 5px; }
-        .share { color: #27ae60; font-weight: bold; }
-        .clear { color: #95a5a6; }
-        #itemInput { display: none; }
+        body {
+            font-family: sans-serif;
+            margin: 8px;
+            background: #f0f2f5;
+            color: #333;
+            text-align: left;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .btn-voice {
+            width: 100%;
+            padding: 18px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-voice.listening {
+            background: #f1c40f;
+            color: black;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .store-section {
+            background: white;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .store-title {
+            font-size: 0.65rem;
+            font-weight: bold;
+            color: #2980b9;
+            text-transform: uppercase;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 2px;
+            margin-bottom: 4px;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid #fcfcfc;
+        }
+
+        .item span {
+            flex: 1;
+            font-size: 1rem;
+            line-height: 1.2;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #27ae60;
+            margin: 0;
+        }
+
+        .del {
+            color: #eee;
+            font-size: 1.1rem;
+            padding-left: 5px;
+        }
+
+        .footer-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .clear,
+        .share {
+            background: none;
+            border: none;
+            font-size: 0.75rem;
+            text-decoration: underline;
+            padding: 5px;
+        }
+
+        .share {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .clear {
+            color: #95a5a6;
+        }
+
+        #itemInput {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <button id="voiceBtn" class="btn-voice">🎤 DICTAR</button>
-    <input type="text" id="itemInput">
-    <div id="listContainer">Cargando lista...</div>
-    <div class="footer-buttons">
-        <button class="clear" onclick="clearChecked()">Borrar marcados</button>
-        <button class="share" onclick="shareWhatsApp()">Enviar WhatsApp</button>
+    <div class="container">
+        <button id="voiceBtn" class="btn-voice">🎤 DICTAR</button>
+        <input type="text" id="itemInput" placeholder="O escribe aquí y pulsa Enter...">
+        <div id="listContainer">Cargando lista...</div>
+        <div class="footer-buttons">
+            <button class="clear" onclick="clearChecked()">Borrar marcados</button>
+            <button class="share" onclick="shareWhatsApp()">Enviar WhatsApp</button>
+        </div>
+        <div style="text-align: center; margin-top: 20px; font-size: 0.8rem; color: #7f8c8d; font-style: italic;">
+            Producto EN establecimiento PARA persona
+        </div>
     </div>
-    <div style="text-align: center; margin-top: 20px; font-size: 0.8rem; color: #7f8c8d; font-style: italic;">
-        Producto EN establecimiento PARA persona
-    </div>
-</div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // CONFIGURACIÓN DE TU PROYECTO (Pega aquí lo del Paso 1)
-    const firebaseConfig = {
-  apiKey: "AIzaSyArwel_EcbrX8gFogXAwDOwlmUDqsi0hTA",
-  authDomain: "compras-58fd2.firebaseapp.com",
-databaseURL: "https://compras-58fd2-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "compras-58fd2",
-  storageBucket: "compras-58fd2.firebasestorage.app",
-  messagingSenderId: "591579835512",
-  appId: "1:591579835512:web:8da32af8f587dbfafb918d",
-  measurementId: "G-EXCRMPVJ53"
-};
+        // CONFIGURACIÓN DE TU PROYECTO (Pega aquí lo del Paso 1)
+        const firebaseConfig = {
+            apiKey: "AIzaSyArwel_EcbrX8gFogXAwDOwlmUDqsi0hTA",
+            authDomain: "compras-58fd2.firebaseapp.com",
+            databaseURL: "https://compras-58fd2-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "compras-58fd2",
+            storageBucket: "compras-58fd2.firebasestorage.app",
+            messagingSenderId: "591579835512",
+            appId: "1:591579835512:web:8da32af8f587dbfafb918d",
+            measurementId: "G-EXCRMPVJ53"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const listaRef = ref(db, 'compraV5');
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const listaRef = ref(db, 'compraV5');
 
-    let sections = [];
+        let sections = [];
 
-    // ESCUCHAR CAMBIOS EN TIEMPO REAL
-    onValue(listaRef, (snapshot) => {
-        const data = snapshot.val();
-        sections = data || [];
-        render();
-    });
+        // ESCUCHAR CAMBIOS EN TIEMPO REAL
+        onValue(listaRef, (snapshot) => {
+            const data = snapshot.val();
+            sections = data || [];
+            render();
+        });
 
-    // GUARDAR EN FIREBASE
-    function save() {
-        set(listaRef, sections);
-    }
-
-    // TUS FUNCIONES ORIGINALES (Adaptadas mínimamente)
-    window.addItem = function() {
-        let val = document.getElementById('itemInput').value.trim().toLowerCase();
-        if (!val) return;
-
-        let storeName = "GENERAL", person = "", productName = val;
-
-        if (val.includes(" para ")) {
-            let parts = val.split(" para ");
-            person = parts[1].trim();
-            productName = parts[0].trim();
+        // GUARDAR EN FIREBASE
+        function save() {
+            set(listaRef, sections);
         }
 
-        const storeMatch = productName.match(/(?: de | en )(.+)/);
-        if (storeMatch) {
-            storeName = storeMatch[1].trim().toUpperCase();
-            productName = productName.split(storeMatch[0])[0].trim();
-        }
+        // TUS FUNCIONES ORIGINALES (Adaptadas mínimamente)
+        window.addItem = function () {
+            let val = document.getElementById('itemInput').value.trim().toLowerCase();
+            if (!val) return;
 
-        let finalTitle = person ? `${storeName} (${person.toUpperCase()})` : storeName.toUpperCase();
-        productName = productName.charAt(0).toUpperCase() + productName.slice(1);
+            let storeName = "GENERAL", person = "", productName = val;
 
-        let section = sections.find(s => s.title === finalTitle);
-        if (!section) {
-            section = { title: finalTitle, items: [] };
-            sections.push(section);
-        }
+            if (val.includes(" para ")) {
+                let parts = val.split(" para ");
+                person = parts[1].trim();
+                productName = parts[0].trim();
+            }
 
-        section.items.push({ name: productName, checked: false });
-        document.getElementById('itemInput').value = '';
-        save();
-    };
+            const storeMatch = productName.match(/(?: de | en )(.+)/);
+            if (storeMatch) {
+                storeName = storeMatch[1].trim().toUpperCase();
+                productName = productName.split(storeMatch[0])[0].trim();
+            }
 
-    window.render = function() {
-        const container = document.getElementById('listContainer');
-        container.innerHTML = '';
-        sections.forEach((sec, sIdx) => {
-            if (!sec.items || sec.items.length === 0) return;
-            const divSec = document.createElement('div');
-            divSec.className = 'store-section';
-            divSec.innerHTML = `<div class="store-title">${sec.title}</div>`;
-            sec.items.forEach((item, iIdx) => {
-                const divItem = document.createElement('div');
-                divItem.className = 'item';
-                divItem.innerHTML = `
+            let finalTitle = person ? `${storeName} (${person.toUpperCase()})` : storeName.toUpperCase();
+            productName = productName.charAt(0).toUpperCase() + productName.slice(1);
+
+            let section = sections.find(s => s.title === finalTitle);
+            if (!section) {
+                section = { title: finalTitle, items: [] };
+                sections.push(section);
+            }
+
+            section.items.push({ name: productName, checked: false });
+            document.getElementById('itemInput').value = '';
+            save();
+        };
+
+        window.render = function () {
+            const container = document.getElementById('listContainer');
+            container.innerHTML = '';
+            sections.forEach((sec, sIdx) => {
+                if (!sec.items || sec.items.length === 0) return;
+                const divSec = document.createElement('div');
+                divSec.className = 'store-section';
+                divSec.innerHTML = `<div class="store-title">${sec.title}</div>`;
+                sec.items.forEach((item, iIdx) => {
+                    const divItem = document.createElement('div');
+                    divItem.className = 'item';
+                    divItem.innerHTML = `
                     <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggle(${sIdx}, ${iIdx})">
                     <span style="${item.checked ? 'text-decoration:line-through;color:#ccc' : ''}">${item.name}</span>
                     <div class="del" onclick="remove(${sIdx}, ${iIdx})">✕</div>
                 `;
-                divSec.appendChild(divItem);
+                    divSec.appendChild(divItem);
+                });
+                container.appendChild(divSec);
             });
-            container.appendChild(divSec);
-        });
-    }
+        }
 
-    window.toggle = (sIdx, iIdx) => { sections[sIdx].items[iIdx].checked = !sections[sIdx].items[iIdx].checked; save(); };
-    window.remove = (sIdx, iIdx) => { 
-        sections[sIdx].items.splice(iIdx, 1); 
-        if (sections[sIdx].items.length === 0) sections.splice(sIdx, 1); 
-        save(); 
-    };
-    window.clearChecked = () => {
-        sections.forEach(sec => sec.items = sec.items.filter(i => !i.checked));
-        sections = sections.filter(sec => sec.items.length > 0);
-        save();
-    };
-
-    window.shareWhatsApp = () => {
-        let text = "*LISTA COMPRA* 🛒\n\n";
-        sections.forEach(sec => {
-            text += `*${sec.title}*\n`;
-            sec.items.forEach(i => text += `${i.checked ? '✅':'☐'} ${i.name}\n`);
-            text += "\n";
-        });
-        window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(text));
-    };
-
-    // RECONOCIMIENTO DE VOZ
-    document.getElementById('voiceBtn').onclick = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const rec = new SpeechRecognition();
-        rec.lang = 'es-ES';
-        rec.onstart = () => { voiceBtn.classList.add('listening'); voiceBtn.innerText = "🔴 ESCUCHANDO..."; };
-        rec.onend = () => { voiceBtn.classList.remove('listening'); voiceBtn.innerText = "🎤 DICTAR"; };
-        rec.onresult = (e) => {
-            document.getElementById('itemInput').value = e.results[0][0].transcript;
-            addItem();
+        window.toggle = (sIdx, iIdx) => { sections[sIdx].items[iIdx].checked = !sections[sIdx].items[iIdx].checked; save(); };
+        window.remove = (sIdx, iIdx) => {
+            sections[sIdx].items.splice(iIdx, 1);
+            if (sections[sIdx].items.length === 0) sections.splice(sIdx, 1);
+            save();
         };
-        rec.start();
-    };
-</script>
+        window.clearChecked = () => {
+            sections.forEach(sec => sec.items = sec.items.filter(i => !i.checked));
+            sections = sections.filter(sec => sec.items.length > 0);
+            save();
+        };
+
+        window.shareWhatsApp = () => {
+            let text = "*LISTA COMPRA* 🛒\n\n";
+            sections.forEach(sec => {
+                text += `*${sec.title}*\n`;
+                sec.items.forEach(i => text += `${i.checked ? '✅' : '☐'} ${i.name}\n`);
+                text += "\n";
+            });
+            window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(text));
+        };
+
+        // RECONOCIMIENTO DE VOZ
+        document.getElementById('voiceBtn').onclick = () => {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const rec = new SpeechRecognition();
+            rec.lang = 'es-ES';
+            rec.continuous = false; // Solo capturar una frase
+            rec.interimResults = false; // Solo el resultado final
+
+            rec.onstart = () => { voiceBtn.classList.add('listening'); voiceBtn.innerText = "🔴 ESCUCHANDO..."; };
+            rec.onend = () => { voiceBtn.classList.remove('listening'); voiceBtn.innerText = "🎤 DICTAR"; };
+            rec.onresult = (e) => {
+                document.getElementById('itemInput').value = e.results[0][0].transcript;
+                addItem();
+            };
+            // Detener la escucha en cuanto se detecta el final del habla
+            rec.onspeechend = () => rec.stop();
+            rec.start();
+        };
+
+        // AÑADIR ITEM CON TECLA ENTER
+        document.getElementById('itemInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                addItem();
+            }
+        });
+    </script>
 </body>
+
 </html>
